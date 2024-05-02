@@ -14,7 +14,7 @@ class Article
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+            #[ORM\Column(length: 255)]
     #[Assert\Length(min: 5, max: 50, minMessage: 'ton nom au min {{ limit }} caracters ', maxMessage: 'ton nom au max {{ limit }} caracters')]
     private ?string $nom = null;
 

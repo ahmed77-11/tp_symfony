@@ -21,21 +21,9 @@ class IndexController extends AbstractController
     #[Route('/', name: 'home')]
     public function home(ArticleRepository $articleRepository,Request $request,EntityManagerInterface $entityManager): Response
     {
-        $propertySearch = new PropretySearch();
-        $form = $this->createForm(PropretySearchType::class,$propertySearch);
-        $form->handleRequest($request);
-        $articles= [];
-        if($form->isSubmitted() && $form->isValid()) {
-            $nom = $propertySearch->getNom();
-            if ($nom!="") {
-                //si on a fourni un nom d'article on affiche tous les articles ayant ce nom
-                $articles = $articleRepository->findBy(['nom' => $nom]);
-            }
-            else{
-            //si si aucun nom n'est fourni on affiche tous les articles
+
             $articles= $articleRepository->findAll();
-            }
-        }
+
 
         return $this->render('/index.html.twig', ['articles' => $articles]);
     }
