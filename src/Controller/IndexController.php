@@ -2,9 +2,14 @@
 namespace App\Controller;
 use App\Entity\Article;
 use App\Entity\Category;
+use App\Entity\CategorySearch;
+use App\Entity\PriceSearch;
 use App\Entity\PropretySearch;
 use App\Form\ArticleType;
+use App\Form\CategorySearchType;
 use App\Form\CategoryType;
+use App\Form\PriceSearchType;
+use App\Form\PropertySearchType;
 use App\Form\PropretySearchType;
 use App\Repository\ArticleRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,10 +27,23 @@ class IndexController extends AbstractController
     public function home(ArticleRepository $articleRepository,Request $request,EntityManagerInterface $entityManager): Response
     {
 
-            $articles= $articleRepository->findAll();
+        $priceSearch = new PropretySearch();
+        $form = $this->createForm(PropertySearchType::class, $priceSearch);
+        $form->handleRequest($request);
+        $articles = [];
+        if ($form->isSubmitted() && $form->isValid()) {
+            $nom = $priceSearch->getNom();
+            if ($nom != null) {
+                $articles = $articleRepository->findBy(['nom' => $nom]);
+            } else {
+                $articles = $articleRepository->findAll();
+            }
+        }
 
 
-        return $this->render('/index.html.twig', ['articles' => $articles]);
+
+
+        return $this->render('/index.html.twig', ['form'=>$form->createView(),'articles' => $articles]);
     }
 
     #[Route('/article/save', name: 'saveArticle')]
@@ -106,6 +124,44 @@ class IndexController extends AbstractController
         return $this->render('articles/newCategory.html.twig', ['form' => $form->createView()]);
 
     }
+    #[Route('/art_cat/', name: 'article_par_cat', methods: ['GET', 'POST'])]
+    public function articleParCat(ArticleRepository $articleRepository,Request $request,EntityManagerInterface $entityManager): Response
+    {
 
+        $categorySearch = new CategorySearch();
+        $form = $this->createForm(CategorySearchType::class, $categorySearch);
+        $form->handleRequest($request);
+
+        $articles = [];
+        if ($form->isSubmitted() && $form->isValid()) {
+            $selectedCategory = $categorySearch->getCategory();
+
+            $articles = $selectedCategory !== null ?
+                $entityManager->getRepository(Article::class)->findBy(['category' => $selectedCategory]) :
+                $entityManager->getRepository(Article::class)->findAll();
+        }
+
+        return $this->render('articles/articlesParCategorie.html.twig', [
+            'form' => $form->createView(),
+            'articles' => $articles,
+        ]);
+    }
+    #[Route('/art_prix', name: 'article_par_prix', methods: ['GET','POST'])]
+    public function articleParPrix(ArticleRepository $articleRepository,Request $request,EntityManagerInterface $entityManager): Response
+    {
+        $priceSearch = new PriceSearch();
+        $form = $this->createForm(PriceSearchType::class, $priceSearch);
+        $form->handleRequest($request);
+        $articles = [];
+        if ($form->isSubmitted() && $form->isValid()) {
+            $minPrice = $priceSearch->getMinPrice();
+            $maxPrice = $priceSearch->getMaxPrice();
+            $articles = $entityManager->getRepository(Article::class)->findByPriceRange($minPrice, $maxPrice);
+        }
+        return $this->render('articles/articlesParPrix.html.twig', [
+            'form' => $form->createView(),
+            'articles' => $articles,
+        ]);
+    }
 
 }
